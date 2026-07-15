@@ -1,0 +1,196 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "e0aeb7fcb0f86a7cfe473dacb8df1d28",
+    "entities": [
+      {
+        "tableName": "anagrafica_impianti",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_impianto` INTEGER NOT NULL, `gestore` TEXT NOT NULL, `bandiera` TEXT NOT NULL, `tipo_impianto` TEXT NOT NULL, `nome_impianto` TEXT NOT NULL, `indirizzo` TEXT NOT NULL, `comune` TEXT NOT NULL, `provincia` TEXT NOT NULL, `latitudine` REAL NOT NULL, `longitudine` REAL NOT NULL, PRIMARY KEY(`id_impianto`))",
+        "fields": [
+          {
+            "fieldPath": "idImpianto",
+            "columnName": "id_impianto",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gestore",
+            "columnName": "gestore",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bandiera",
+            "columnName": "bandiera",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipoImpianto",
+            "columnName": "tipo_impianto",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nomeImpianto",
+            "columnName": "nome_impianto",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indirizzo",
+            "columnName": "indirizzo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "comune",
+            "columnName": "comune",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "provincia",
+            "columnName": "provincia",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitudine",
+            "columnName": "latitudine",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitudine",
+            "columnName": "longitudine",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id_impianto"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_anagrafica_impianti_comune",
+            "unique": false,
+            "columnNames": [
+              "comune"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_anagrafica_impianti_comune` ON `${TABLE_NAME}` (`comune`)"
+          },
+          {
+            "name": "index_anagrafica_impianti_provincia",
+            "unique": false,
+            "columnNames": [
+              "provincia"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_anagrafica_impianti_provincia` ON `${TABLE_NAME}` (`provincia`)"
+          },
+          {
+            "name": "index_anagrafica_impianti_bandiera",
+            "unique": false,
+            "columnNames": [
+              "bandiera"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_anagrafica_impianti_bandiera` ON `${TABLE_NAME}` (`bandiera`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "prezzi_carburanti",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id_impianto` INTEGER NOT NULL, `desc_carburante` TEXT NOT NULL, `prezzo` REAL NOT NULL, `is_self` INTEGER NOT NULL, `dt_comu` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idImpianto",
+            "columnName": "id_impianto",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descCarburante",
+            "columnName": "desc_carburante",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "prezzo",
+            "columnName": "prezzo",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSelf",
+            "columnName": "is_self",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dtComu",
+            "columnName": "dt_comu",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_prezzi_carburanti_id_impianto",
+            "unique": false,
+            "columnNames": [
+              "id_impianto"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_prezzi_carburanti_id_impianto` ON `${TABLE_NAME}` (`id_impianto`)"
+          },
+          {
+            "name": "index_prezzi_carburanti_desc_carburante",
+            "unique": false,
+            "columnNames": [
+              "desc_carburante"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_prezzi_carburanti_desc_carburante` ON `${TABLE_NAME}` (`desc_carburante`)"
+          },
+          {
+            "name": "index_prezzi_carburanti_id_impianto_desc_carburante_is_self",
+            "unique": false,
+            "columnNames": [
+              "id_impianto",
+              "desc_carburante",
+              "is_self"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_prezzi_carburanti_id_impianto_desc_carburante_is_self` ON `${TABLE_NAME}` (`id_impianto`, `desc_carburante`, `is_self`)"
+          }
+        ],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e0aeb7fcb0f86a7cfe473dacb8df1d28')"
+    ]
+  }
+}

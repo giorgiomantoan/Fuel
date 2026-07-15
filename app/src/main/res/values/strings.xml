@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fuel</string>
+    <string name="search_title">Cerca distributori</string>
+    <string name="fuel_type">Tipo carburante</string>
+    <string name="radius">Raggio (km)</string>
+    <string name="search_position">Cerca vicino a me</string>
+    <string name="search_address">Cerca per indirizzo</string>
+    <string name="address_hint">Via, città…</string>
+    <string name="search">Cerca</string>
+    <string name="results">Risultati</string>
+    <string name="no_results">Nessun distributore trovato</string>
+    <string name="loading">Caricamento…</string>
+    <string name="downloading_data">Scaricamento dati carburanti…</string>
+    <string name="error_download">Errore scaricamento dati</string>
+    <string name="error_location">Impossibile ottenere la posizione</string>
+    <string name="permission_location">Permesso posizione necessario</string>
+    <string name="open_navigation">Apri navigazione</string>
+    <string name="self_service">Self</string>
+    <string name="servito">Servito</string>
+    <string name="all_fuels">Tutti i carburanti</string>
+    <string name="retry">Riprova</string>
+    <string name="price">Prezzo</string>
+    <string name="sort_by_price">Ordina per prezzo crescente</string>
+</resources>
