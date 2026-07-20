@@ -17,7 +17,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -89,22 +91,68 @@ fun MainScreen(viewModel: FuelViewModel) {
             onDismissRequest = { showCreditsDialog = false },
             title = { Text("Fuel v1.2.0", fontWeight = FontWeight.Bold) },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
-                        "Sviluppato da ravem (github.com/ravem)\n\n" +
+                        "Sviluppato da ravem (github.com/ravem)\n" +
                         "Licenza MIT – Copyright © 2026 ravem\n\n" +
-                        "Permission is hereby granted...",
+                        "This software is provided \"as is\", without warranty of any kind.",
                         style = MaterialTheme.typography.bodySmall
                     )
                     Spacer(Modifier.height(12.dp))
                     HorizontalDivider()
                     Spacer(Modifier.height(8.dp))
-                    Text("Componenti:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text("Componenti e licenze:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(8.dp))
+
+                    val components = listOf(
+                        "Jetpack Compose BOM 2024.12.01" to "Apache 2.0",
+                        "Compose UI / Material3 / Material Icons" to "Apache 2.0",
+                        "Activity Compose 1.9.3" to "Apache 2.0",
+                        "Navigation Compose 2.8.5" to "Apache 2.0",
+                        "Lifecycle + ViewModel Compose 2.8.7" to "Apache 2.0",
+                        "Room Database 2.6.1" to "Apache 2.0",
+                        "OkHttp 4.12.0" to "Apache 2.0",
+                        "OSMDroid 6.1.18" to "Apache 2.0",
+                        "Google Play Services Location 21.3.0" to "Apache 2.0",
+                        "Kotlin Coroutines 1.9.0" to "Apache 2.0",
+                        "DataStore Preferences 1.1.1" to "Apache 2.0",
+                        "Core KTX 1.15.0" to "Apache 2.0",
+                        "Google Play Review 2.0.2" to "Apache 2.0"
+                    )
+
+                    components.forEach { (name, license) ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp).padding(end = 4.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Column {
+                                Text(name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                Text(license, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider()
+                    Spacer(Modifier.height(8.dp))
+                    Text("Dati e servizi di terze parti:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        "• Jetpack Compose / Room / osmdroid / OkHttp\n" +
-                        "• Google Play Services / Kotlin Coroutines\n" +
-                        "• Material Design 3 / OpenStreetMap / Dati MIMIT",
+                        "• OpenStreetMap dati cartografici — © OpenStreetMap contributors (ODbL)\n" +
+                        "• Thunderforest tile server — mappe © Thunderforest, dati © OSM contributors\n" +
+                        "• Dati prezzi carburanti — Ministero delle Imprese e del Made in Italy (MIMIT) — " +
+                        "Dati pubblici italiani (CC BY 4.0, salvo diversa indicazione)",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Per i testi completi delle licenze visita:\n" +
+                        "https://www.apache.org/licenses/LICENSE-2.0\n" +
+                        "https://opendatacommons.org/licenses/odbl/",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary
                     )
                 }
             },
