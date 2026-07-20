@@ -34,7 +34,7 @@ class FuelApplication : Application() {
             // deve identificare l'app e fornire un contatto
             userAgentValue = "Fuel/$appVersion (Android ${
                 android.os.Build.VERSION.RELEASE
-            }; contatto: paolostefani@example.com)"
+            }; contatto: transalp98@gmail.com)"
             osmdroidBasePath = filesDir
             osmdroidTileCache = cacheDir
         }

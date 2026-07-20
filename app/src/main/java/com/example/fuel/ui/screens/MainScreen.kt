@@ -34,9 +34,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.example.fuel.data.model.ImpiantoConPrezzo
 import com.example.fuel.data.repository.FuelRepository
 import com.example.fuel.ui.viewmodel.FuelViewModel
+import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.util.MapTileIndex
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
@@ -375,9 +377,29 @@ private fun OsmMapView(
         }
     }
 
+    // Tile source Thunderforest (OpenStreetMap-based, richiede API key gratuita)
+    val thunderforestTileSource = remember {
+        object : OnlineTileSourceBase(
+            "Thunderforest-Landscape", // name (usato per cache)
+            1,  // zoom min
+            18, // zoom max
+            256, // tile size in pixels
+            ".png", // image filename ending
+            arrayOf("https://tile.thunderforest.com/landscape/") // base URL(s)
+        ) {
+            override fun getTileURLString(pMapTileIndex: Long): String {
+                val zoom = MapTileIndex.getZoom(pMapTileIndex)
+                val x = MapTileIndex.getX(pMapTileIndex)
+                val y = MapTileIndex.getY(pMapTileIndex)
+                // URL formato: https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=KEY
+                return "${getBaseUrl()}$zoom/$x/$y$mImageFilenameEnding?apikey=YOUR_THUNDERFOREST_API_KEY"
+            }
+        }
+    }
+
     AndroidView(modifier = modifier, factory = { c ->
         MapView(c).apply {
-            setTileSource(TileSourceFactory.MAPNIK)
+            setTileSource(thunderforestTileSource)
             setMultiTouchControls(true)
             controller.setZoom(12.0); controller.setCenter(GeoPoint(userLat, userLon))
             layoutParams = android.view.ViewGroup.LayoutParams(
