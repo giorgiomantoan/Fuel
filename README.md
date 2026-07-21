@@ -1,17 +1,17 @@
-# Fuel ⛽
+# Fuel
 
 App Android per la ricerca di distributori di carburante in Italia,
 basata sui dati ufficiali **MIMIT** (Ministero delle Imprese e del Made in Italy).
 
 ## Funzionalità
 
-- 📥 **Download automatico** dei dati MIMIT (prezzi e anagrafica impianti)
-- ⛽ **Ricerca per carburante**: Benzina, Diesel, GPL, Metano
-- 📍 **Ricerca per posizione** o per indirizzo con raggio configurabile (1–25 km)
-- 🗺️ **Mappa OpenStreetMap** con marker colorati
-- 📋 **Risultati ordinati per prezzo** crescente
-- 🧭 **Navigazione** verso il distributore via Google Maps
-- 🎨 **Material Design 3** con Dynamic Colors
+- **Download automatico** dei dati MIMIT (prezzi e anagrafica impianti)
+- **Ricerca per carburante**: Benzina, Diesel, GPL, Metano
+- **Ricerca per posizione** o per indirizzo con raggio configurabile (1–25 km)
+- **Mappa OpenStreetMap** con marker colorati
+- **Risultati ordinati per prezzo** crescente
+- **Navigazione** verso il distributore via Google Maps
+- **Material Design 3** con Dynamic Colors
 
 ## Stack Tecnologico
 
