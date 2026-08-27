@@ -27,6 +27,13 @@ interface AnagraficaDao {
     @Query("SELECT * FROM anagrafica_impianti WHERE comune LIKE '%' || :comune || '%' OR indirizzo LIKE '%' || :indirizzo || '%'")
     suspend fun searchByAddress(comune: String, indirizzo: String): List<AnagraficaImpianto>
 
+    /**
+     * Cerca impianti solo per comune (es. per ricerca città).
+     * Più preciso di [searchByAddress] perché non cerca nell'indirizzo stradale.
+     */
+    @Query("SELECT * FROM anagrafica_impianti WHERE comune LIKE '%' || :comune || '%'")
+    suspend fun searchByComune(comune: String): List<AnagraficaImpianto>
+
     @Query("SELECT * FROM anagrafica_impianti WHERE id_impianto IN (SELECT DISTINCT id_impianto FROM prezzi_carburanti)")
     suspend fun getAllWithPrices(): List<AnagraficaImpianto>
 }

@@ -85,6 +85,30 @@ fun MainScreen(viewModel: FuelViewModel) {
         return
     }
 
+    // === Schermata di caricamento durante il download iniziale ===
+    if (downloadState is FuelRepository.DownloadState.Downloading && tipiCarburante.isEmpty()) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(modifier = Modifier.fillMaxSize().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
+                CircularProgressIndicator(modifier = Modifier.size(64.dp))
+                Spacer(Modifier.height(24.dp))
+                Text("Download dati carburanti in corso…",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+                Text("Prima esecuzione: scaricamento dati MIMIT",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(4.dp))
+                Text("Richiede qualche secondo…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        return
+    }
+
     // === Dialog crediti ===
     if (showCreditsDialog) {
         AlertDialog(
@@ -363,7 +387,7 @@ private fun SearchPanel(
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = searchMode == FuelViewModel.SearchMode.POSITION,
-                    onClick = { if (selectedFuel.isNotBlank()) onVicinoAMe() else onSearchModeChange(FuelViewModel.SearchMode.POSITION) },
+                    onClick = { onSearchModeChange(FuelViewModel.SearchMode.POSITION); onVicinoAMe() },
                     label = { Text("Vicino a me") }, leadingIcon = { Icon(Icons.Default.MyLocation, null, Modifier.size(18.dp)) },
                     modifier = Modifier.weight(1f))
                 FilterChip(selected = searchMode == FuelViewModel.SearchMode.ADDRESS,
@@ -375,13 +399,28 @@ private fun SearchPanel(
             Text("Raggio: ${radiusKm.toInt()} km", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Slider(value = radiusKm.toFloat(), onValueChange = { onRadiusChange(it.toDouble()) }, valueRange = 1f..25f, steps = 23, modifier = Modifier.fillMaxWidth())
             AnimatedVisibility(visible = searchMode == FuelViewModel.SearchMode.ADDRESS) {
-                OutlinedTextField(value = addressQuery, onValueChange = { onAddressQueryChange(it) },
-                    label = { Text("Via, città…") }, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    singleLine = true, leadingIcon = { Icon(Icons.Default.Place, null) }, textStyle = MaterialTheme.typography.bodyMedium)
+                Column {
+                    OutlinedTextField(value = addressQuery, onValueChange = { onAddressQueryChange(it) },
+                        label = { Text("Via, città…") }, modifier = Modifier.fillMaxWidth(),
+                        singleLine = true, leadingIcon = { Icon(Icons.Default.Place, null) }, textStyle = MaterialTheme.typography.bodyMedium)
+                    if (selectedFuel.isBlank()) {
+                        Text("Seleziona prima un carburante sopra",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(start = 16.dp, top = 4.dp))
+                    }
+                }
             }
-            Button(onClick = onSearch, modifier = Modifier.fillMaxWidth(), enabled = !isSearching && selectedFuel.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onSearch, modifier = Modifier.fillMaxWidth(), enabled = !isSearching) {
                 if (isSearching) { CircularProgressIndicator(Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp); Spacer(Modifier.width(8.dp)) }
                 Text(if (isSearching) "Ricerca in corso…" else "Cerca")
+            }
+            if (selectedFuel.isBlank()) {
+                Text("Seleziona un tipo di carburante dal menu sopra per avviare la ricerca",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp, top = 2.dp))
             }
         }
     }

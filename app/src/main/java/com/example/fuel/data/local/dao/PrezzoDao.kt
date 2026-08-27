@@ -64,9 +64,8 @@ interface PrezzoDao {
     }
 
     /**
-     * Cerca distributori per LIKE pattern sul carburante.
-     * Prende il prezzo più basso per impianto (self se disponibile, altrimenti servito).
-     * JOIN diretto senza filtro is_self (include GPL, Metano che sono solo servito).
+     * Cerca distributori per LIKE pattern sul carburante (solo self-service).
+     * Prende il prezzo più basso per impianto (solo is_self = 1).
      */
     @Query("""
         SELECT a.*, p.desc_carburante, p.prezzo, p.is_self, p.dt_comu
@@ -75,6 +74,7 @@ interface PrezzoDao {
             SELECT id_impianto, desc_carburante, MIN(prezzo) as prezzo, is_self, dt_comu
             FROM prezzi_carburanti
             WHERE (desc_carburante LIKE :pattern OR desc_carburante = :exact OR (:pattern2 IS NOT NULL AND desc_carburante LIKE :pattern2))
+              AND is_self = 1
             GROUP BY id_impianto
         ) p ON a.id_impianto = p.id_impianto
         ORDER BY p.prezzo ASC
@@ -102,6 +102,62 @@ interface PrezzoDao {
     """)
     suspend fun searchByFuelTypeAll(
         pattern: String,
+        exact: String = "",
+        pattern2: String? = null
+    ): List<ImpiantoConPrezzo>
+
+    /**
+     * Cerca distributori per LIKE pattern (solo self) con bounding box geografico
+     * per filtrare a livello SQL prima di calcolare le distanze precise in Kotlin.
+     *
+     * @param latMin, latMax, lonMin, lonMax bounding box approssimativo.
+     */
+    @Query("""
+        SELECT a.*, p.desc_carburante, p.prezzo, p.is_self, p.dt_comu
+        FROM anagrafica_impianti a
+        INNER JOIN (
+            SELECT id_impianto, desc_carburante, MIN(prezzo) as prezzo, is_self, dt_comu
+            FROM prezzi_carburanti
+            WHERE (desc_carburante LIKE :pattern OR desc_carburante = :exact OR (:pattern2 IS NOT NULL AND desc_carburante LIKE :pattern2))
+              AND is_self = 1
+            GROUP BY id_impianto
+        ) p ON a.id_impianto = p.id_impianto
+        WHERE a.latitudine BETWEEN :latMin AND :latMax
+          AND a.longitudine BETWEEN :lonMin AND :lonMax
+        ORDER BY p.prezzo ASC
+    """)
+    suspend fun searchByFuelTypeSelfBounded(
+        pattern: String,
+        latMin: Double,
+        latMax: Double,
+        lonMin: Double,
+        lonMax: Double,
+        exact: String = "",
+        pattern2: String? = null
+    ): List<ImpiantoConPrezzo>
+
+    /**
+     * Cerca distributori per LIKE pattern (self e servito) con bounding box geografico.
+     */
+    @Query("""
+        SELECT a.*, p.desc_carburante, p.prezzo, p.is_self, p.dt_comu
+        FROM anagrafica_impianti a
+        INNER JOIN (
+            SELECT id_impianto, desc_carburante, MIN(prezzo) as prezzo, is_self, dt_comu
+            FROM prezzi_carburanti
+            WHERE (desc_carburante LIKE :pattern OR desc_carburante = :exact OR (:pattern2 IS NOT NULL AND desc_carburante LIKE :pattern2))
+            GROUP BY id_impianto
+        ) p ON a.id_impianto = p.id_impianto
+        WHERE a.latitudine BETWEEN :latMin AND :latMax
+          AND a.longitudine BETWEEN :lonMin AND :lonMax
+        ORDER BY p.prezzo ASC
+    """)
+    suspend fun searchByFuelTypeAllBounded(
+        pattern: String,
+        latMin: Double,
+        latMax: Double,
+        lonMin: Double,
+        lonMax: Double,
         exact: String = "",
         pattern2: String? = null
     ): List<ImpiantoConPrezzo>

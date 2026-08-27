@@ -88,7 +88,30 @@ class FuelRepository(
     }
 
     /**
+     * Calcola un bounding box approssimativo intorno a [lat], [lon] con raggio [raggioKm].
+     * Restituisce (latMin, latMax, lonMin, lonMax).
+     */
+    private fun calcolaBoundingBox(lat: Double, lon: Double, raggioKm: Double): Quadruple<Double> {
+        val latDelta = raggioKm / 111.0
+        val lonDelta = raggioKm / (111.0 * cos(Math.toRadians(lat)))
+        return Quadruple(lat - latDelta, lat + latDelta, lon - lonDelta, lon + lonDelta)
+    }
+
+    /**
+     * Determina se cercare solo self-service in base al tipo di carburante.
+     * GPL e Metano sono quasi sempre servito (is_self = 0), quindi va cercato anche servito.
+     */
+    private fun isSoloSelf(carburante: String): Boolean {
+        return when (carburante) {
+            "GPL", "Metano" -> false
+            else -> true
+        }
+    }
+
+    /**
      * Cerca distributori per tipo carburante, filtrati per raggio dalla posizione.
+     * Usa un bounding box SQL per ridurre i dati caricati in memoria.
+     * Per GPL e Metano cerca automaticamente anche servito.
      */
     suspend fun searchByFuelTypeNearby(
         carburante: String,
@@ -98,11 +121,24 @@ class FuelRepository(
         soloSelf: Boolean = true
     ): List<ImpiantoConPrezzo> {
         val (pattern, exact, pattern2) = getFuelSearchParams(carburante)
+        val (latMin, latMax, lonMin, lonMax) = calcolaBoundingBox(lat, lon, raggioKm)
 
-        val results = if (soloSelf) {
-            database.prezzoDao().searchByFuelTypeSelf(pattern, exact, pattern2)
+        val useSoloSelf = soloSelf && isSoloSelf(carburante)
+
+        val results = if (useSoloSelf) {
+            database.prezzoDao().searchByFuelTypeSelfBounded(
+                pattern = pattern,
+                latMin = latMin, latMax = latMax,
+                lonMin = lonMin, lonMax = lonMax,
+                exact = exact, pattern2 = pattern2
+            )
         } else {
-            database.prezzoDao().searchByFuelTypeAll(pattern, exact, pattern2)
+            database.prezzoDao().searchByFuelTypeAllBounded(
+                pattern = pattern,
+                latMin = latMin, latMax = latMax,
+                lonMin = lonMin, lonMax = lonMax,
+                exact = exact, pattern2 = pattern2
+            )
         }
 
         return results.map { result ->
@@ -113,7 +149,11 @@ class FuelRepository(
     }
 
     /**
-     * Cerca distributori per tipo carburante vicino a un indirizzo.
+     * Cerca distributori per tipo carburante vicino a un indirizzo/città.
+     * Gestisce tre casi:
+     * 1. Solo città ("Saonara") → match su comune
+     * 2. Solo via ("Via Roma 12") → match su indirizzo
+     * 3. Via + città ("Via Roma 12 Saonara") → estrae la città e cerca per comune
      */
     suspend fun searchByFuelTypeNearAddress(
         carburante: String,
@@ -122,7 +162,26 @@ class FuelRepository(
         raggioKm: Double,
         soloSelf: Boolean = true
     ): List<ImpiantoConPrezzo> {
-        val impianti = database.anagraficaDao().searchByAddress(comune, indirizzo)
+        // 1) Cerca con la query completa in entrambi i campi
+        var impianti = database.anagraficaDao().searchByAddress(comune, indirizzo)
+
+        // 2) Se non trova nulla e la query contiene spazi (via + città),
+        //    prova a estrarre l'ultima parola come nome città
+        if (impianti.isEmpty() && indirizzo.contains(" ")) {
+            val parti = indirizzo.trim().split(Regex("[ ,]+"))
+            // Prova da 1 a 3 parole finali come nome città
+            for (nParole in 1..minOf(3, parti.size - 1)) {
+                val possibiliCitta = parti.takeLast(nParole).joinToString(" ")
+                impianti = database.anagraficaDao().searchByComune(possibiliCitta)
+                if (impianti.isNotEmpty()) break
+            }
+        }
+
+        // 3) Se ancora non trova, prova la query intera come comune
+        if (impianti.isEmpty()) {
+            impianti = database.anagraficaDao().searchByComune(indirizzo)
+        }
+
         if (impianti.isEmpty()) return emptyList()
 
         val avgLat = impianti.map { it.latitudine }.average()
@@ -130,6 +189,11 @@ class FuelRepository(
 
         return searchByFuelTypeNearby(carburante, avgLat, avgLon, raggioKm, soloSelf)
     }
+
+    /**
+     * Contenitore per 4 valori dello stesso tipo (usato per bounding box).
+     */
+    private data class Quadruple<T>(val a: T, val b: T, val c: T, val d: T)
 
     companion object {
         fun calcolaDistanza(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
