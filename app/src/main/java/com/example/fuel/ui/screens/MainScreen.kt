@@ -311,9 +311,12 @@ fun MainScreen(viewModel: FuelViewModel) {
                     onStationSelected = { id -> selectedStationId = id },
                     modifier = Modifier.fillMaxSize()
                 )
-                // Attribuzione obbligatoria per Thunderforest / OSM (Tile Usage Policy)
+                // Attribuzione obbligatoria per OpenStreetMap / Thunderforest (Tile Usage Policy)
                 Text(
-                    stringResource(R.string.map_attribution),
+                    stringResource(
+                        if (BuildConfig.THUNDERFOREST_API_KEY.isNotBlank()) R.string.map_attribution
+                        else R.string.map_attribution_free
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Black.copy(alpha = 0.65f),
                     modifier = Modifier
@@ -520,22 +523,44 @@ private fun OsmMapView(
         }
     }
 
-    // Tile source Thunderforest (OpenStreetMap-based, richiede API key gratuita)
-    val thunderforestTileSource = remember {
-        object : OnlineTileSourceBase(
-            "Thunderforest-Landscape", // name (usato per cache)
-            1,  // zoom min
-            18, // zoom max
-            256, // tile size in pixels
-            ".png", // image filename ending
-            arrayOf("https://tile.thunderforest.com/landscape/") // base URL(s)
-        ) {
-            override fun getTileURLString(pMapTileIndex: Long): String {
-                val zoom = MapTileIndex.getZoom(pMapTileIndex)
-                val x = MapTileIndex.getX(pMapTileIndex)
-                val y = MapTileIndex.getY(pMapTileIndex)
-                // URL formato: https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=KEY
-                return "${getBaseUrl()}$zoom/$x/$y$mImageFilenameEnding?apikey=${BuildConfig.THUNDERFOREST_API_KEY}"
+    // Tile source: se è presente una chiave Thunderforest si usa quello stile,
+    // altrimenti si usano i tile ufficiali OpenStreetMap (Mapnik), gratuiti e SENZA API key.
+    val tileSource = remember {
+        if (BuildConfig.THUNDERFOREST_API_KEY.isNotBlank()) {
+            object : OnlineTileSourceBase(
+                "Thunderforest-Landscape", // name (usato per cache)
+                1,  // zoom min
+                18, // zoom max
+                256, // tile size in pixels
+                ".png", // image filename ending
+                arrayOf("https://tile.thunderforest.com/landscape/") // base URL(s)
+            ) {
+                override fun getTileURLString(pMapTileIndex: Long): String {
+                    val zoom = MapTileIndex.getZoom(pMapTileIndex)
+                    val x = MapTileIndex.getX(pMapTileIndex)
+                    val y = MapTileIndex.getY(pMapTileIndex)
+                    // URL formato: https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=KEY
+                    return "${getBaseUrl()}$zoom/$x/$y$mImageFilenameEnding?apikey=${BuildConfig.THUNDERFOREST_API_KEY}"
+                }
+            }
+        } else {
+            // Tile ufficiali OpenStreetMap (stile Mapnik): uso gratuito senza chiave.
+            // Richiede la citazione "© OpenStreetMap contributors" (già presente in mappa).
+            object : OnlineTileSourceBase(
+                "OSM-Mapnik", // name (usato per cache)
+                0,  // zoom min
+                19, // zoom max
+                256, // tile size in pixels
+                ".png", // image filename ending
+                arrayOf("https://tile.openstreetmap.org/") // base URL(s)
+            ) {
+                override fun getTileURLString(pMapTileIndex: Long): String {
+                    val zoom = MapTileIndex.getZoom(pMapTileIndex)
+                    val x = MapTileIndex.getX(pMapTileIndex)
+                    val y = MapTileIndex.getY(pMapTileIndex)
+                    // URL formato: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+                    return "${getBaseUrl()}$zoom/$x/$y$mImageFilenameEnding"
+                }
             }
         }
     }
@@ -545,7 +570,7 @@ private fun OsmMapView(
 
     AndroidView(modifier = modifier, factory = { c ->
         MapView(c).apply {
-            setTileSource(thunderforestTileSource)
+            setTileSource(tileSource)
             setMultiTouchControls(true)
             controller.setZoom(12.0); controller.setCenter(GeoPoint(userLat, userLon))
             layoutParams = android.view.ViewGroup.LayoutParams(

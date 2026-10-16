@@ -9,8 +9,9 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">mimit.gov.it</domain>
     </domain-config>
-    <!-- Tile server osmdroid (Thunderforest) -->
+    <!-- Tile server osmdroid -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">tile.thunderforest.com</domain>
+        <domain includeSubdomains="true">tile.openstreetmap.org</domain>
     </domain-config>
 </network-security-config>

@@ -36,12 +36,18 @@ basata sui dati ufficiali **MIMIT** (Ministero delle Imprese e del Made in Italy
 
 ## Configurazione: chiave API Thunderforest
 
-La mappa usa i tile di [Thunderforest](https://www.thunderforest.com/) (basati su OpenStreetMap),
-che richiedono una chiave API personale. **La chiave non è inclusa nel repository** per motivi di sicurezza.
+La mappa usa di default i tile **ufficiali OpenStreetMap** (stile Mapnik,
+`tile.openstreetmap.org`), **senza alcuna chiave API**: l'app funziona quindi subito dopo la build.
+L'uso è gratuito per progetti di dimensioni normali, con la citazione obbligatoria
+"© OpenStreetMap contributors" (già presente in mappa).
 
-Per ottenere una chiave gratuita:
+È però possibile usare in alternativa i tile [Thunderforest](https://www.thunderforest.com/)
+(basati su OpenStreetMap), che richiedono una chiave API personale.
+**La chiave non è inclusa nel repository** per motivi di sicurezza.
 
-1. Registrati su https://thunderforest.com/maps/apis/
+Per ottenere una chiave gratuita Thunderforest (opzionale):
+
+1. Registrati su https://www.thunderforest.com/pricing/ (piano "Hobby Project" gratuito)
 2. Crea una chiave per il prodotto landscape
 
 Per configurarla, aggiungi la seguente riga al file **`local.properties`** (non versionato),
@@ -58,7 +64,8 @@ In alternativa, la chiave può essere fornita anche tramite:
 - una variabile d'ambiente `FUEL_THUNDERFOREST_API_KEY`
 
 La precedenza è: `gradle.properties` -> `local.properties` -> variabile d'ambiente.
-Senza la chiave l'app compila correttamente ma la **mappa resta vuota** (nessun tile scaricato).
+Se la chiave è assente la build funziona lo stesso e la mappa usa i tile OpenStreetMap ufficiali;
+con la chiave viene usato lo stile Thunderforest Landscape.
 
 ## Build e installazione
 

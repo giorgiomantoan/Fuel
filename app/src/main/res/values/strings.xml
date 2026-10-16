@@ -28,6 +28,7 @@
 
     <!-- Mappa -->
     <string name="map_attribution">Maps © Thunderforest · Data © OpenStreetMap contributors (ODbL)</string>
+    <string name="map_attribution_free">Map data © OpenStreetMap contributors (ODbL)</string>
     <string name="your_location">La tua posizione</string>
 
     <!-- Risultati -->
@@ -52,7 +53,7 @@
     <string name="credits_developer">Sviluppato da ravem (github.com/ravem)\nLicenza MIT – Copyright © 2026 ravem\n\nThis software is provided \"as is\", without warranty of any kind.</string>
     <string name="credits_components">Componenti e licenze:</string>
     <string name="credits_third_party">Dati e servizi di terze parti:</string>
-    <string name="credits_third_party_text">• OpenStreetMap dati cartografici — © OpenStreetMap contributors (ODbL)\n• Thunderforest tile server — mappe © Thunderforest, dati © OSM contributors\n• Dati prezzi carburanti — Ministero delle Imprese e del Made in Italy (MIMIT) — Dati pubblici italiani (CC BY 4.0, salvo diversa indicazione)</string>
+    <string name="credits_third_party_text">• Dati cartografici OpenStreetMap — © OpenStreetMap contributors (ODbL)\n• Tile server OpenStreetMap ufficiale (stile Mapnik, senza chiave API)\n• Thunderforest tile server (se configurata la chiave opzionale) — mappe © Thunderforest, dati © OSM contributors\n• Dati prezzi carburanti — Ministero delle Imprese e del Made in Italy (MIMIT) — Dati pubblici italiani (CC BY 4.0, salvo diversa indicazione)</string>
     <string name="credits_licenses_link">Per i testi completi delle licenze visita:\nhttps://www.apache.org/licenses/LICENSE-2.0\nhttps://opendatacommons.org/licenses/odbl/</string>
     <string name="close">Chiudi</string>
 
