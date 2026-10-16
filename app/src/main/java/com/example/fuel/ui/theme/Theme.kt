@@ -60,12 +60,30 @@ private val DarkColorScheme = darkColorScheme(
     outlineVariant = Color(0xFF414942)
 )
 
+// Modalità tema selezionabile dall'utente
+enum class ThemeMode(val label: String) {
+    SYSTEM("Sistema"),
+    LIGHT("Chiaro"),
+    DARK("Scuro");
+
+    companion object {
+        fun fromName(name: String?): ThemeMode =
+            entries.firstOrNull { it.name == name } ?: SYSTEM
+    }
+}
+
 @Composable
 fun FuelTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val darkTheme = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current

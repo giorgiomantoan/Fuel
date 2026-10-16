@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,13 +30,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.fuel.BuildConfig
+import com.example.fuel.R
 import com.example.fuel.data.model.ImpiantoConPrezzo
 import com.example.fuel.data.repository.FuelRepository
+import com.example.fuel.ui.theme.ThemeMode
 import com.example.fuel.ui.viewmodel.FuelViewModel
+import com.example.fuel.util.LocationHelper
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
@@ -43,6 +49,9 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.util.MapTileIndex
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+
+// Chiave API Thunderforest letta da BuildConfig (definita in gradle.properties)
+// @see gradle.properties -> FUEL_THUNDERFOREST_API_KEY
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,11 +69,13 @@ fun MainScreen(viewModel: FuelViewModel) {
     val userLat by viewModel.userLat.collectAsState()
     val userLon by viewModel.userLon.collectAsState()
     val userLocationName by viewModel.userLocationName.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     val hasLocationPerm = viewModel.hasLocationPermission()
 
     var showFuelDropdown by remember { mutableStateOf(false) }
     var showResultsPanel by remember { mutableStateOf(false) }
     var showCreditsDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
     var centerMapTrigger by remember { mutableStateOf(0) }
     val autoCenterTrigger by viewModel.centerOnUserTrigger.collectAsState()
     var selectedStationId by remember { mutableStateOf(-1) }  // -1 = nessuno selezionato
@@ -81,7 +92,7 @@ fun MainScreen(viewModel: FuelViewModel) {
 
     // === Se permesso non concesso: schermata di richiesta (prima di tutto) ===
     if (!hasLocationPerm) {
-        PermissionRequestScreen()
+        PermissionRequestScreen(viewModel)
         return
     }
 
@@ -93,15 +104,15 @@ fun MainScreen(viewModel: FuelViewModel) {
                 verticalArrangement = Arrangement.Center) {
                 CircularProgressIndicator(modifier = Modifier.size(64.dp))
                 Spacer(Modifier.height(24.dp))
-                Text("Download dati carburanti in corso…",
+                Text(stringResource(R.string.download_in_progress),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
-                Text("Prima esecuzione: scaricamento dati MIMIT",
+                Text(stringResource(R.string.first_run_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(4.dp))
-                Text("Richiede qualche secondo…",
+                Text(stringResource(R.string.takes_seconds),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -113,26 +124,23 @@ fun MainScreen(viewModel: FuelViewModel) {
     if (showCreditsDialog) {
         AlertDialog(
             onDismissRequest = { showCreditsDialog = false },
-            title = { Text("Fuel v1.2.0", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.credits_title, BuildConfig.VERSION_NAME), fontWeight = FontWeight.Bold) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
-                        "Sviluppato da ravem (github.com/ravem)\n" +
-                        "Licenza MIT – Copyright © 2026 ravem\n\n" +
-                        "This software is provided \"as is\", without warranty of any kind.",
+                        stringResource(R.string.credits_developer),
                         style = MaterialTheme.typography.bodySmall
                     )
                     Spacer(Modifier.height(12.dp))
                     HorizontalDivider()
                     Spacer(Modifier.height(8.dp))
-                    Text("Componenti e licenze:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.credits_components), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
 
                     val components = listOf(
                         "Jetpack Compose BOM 2024.12.01" to "Apache 2.0",
                         "Compose UI / Material3 / Material Icons" to "Apache 2.0",
                         "Activity Compose 1.9.3" to "Apache 2.0",
-                        "Navigation Compose 2.8.5" to "Apache 2.0",
                         "Lifecycle + ViewModel Compose 2.8.7" to "Apache 2.0",
                         "Room Database 2.6.1" to "Apache 2.0",
                         "OkHttp 4.12.0" to "Apache 2.0",
@@ -140,8 +148,7 @@ fun MainScreen(viewModel: FuelViewModel) {
                         "Google Play Services Location 21.3.0" to "Apache 2.0",
                         "Kotlin Coroutines 1.9.0" to "Apache 2.0",
                         "DataStore Preferences 1.1.1" to "Apache 2.0",
-                        "Core KTX 1.15.0" to "Apache 2.0",
-                        "Google Play Review 2.0.2" to "Apache 2.0"
+                        "Core KTX 1.15.0" to "Apache 2.0"
                     )
 
                     components.forEach { (name, license) ->
@@ -162,25 +169,56 @@ fun MainScreen(viewModel: FuelViewModel) {
                     Spacer(Modifier.height(12.dp))
                     HorizontalDivider()
                     Spacer(Modifier.height(8.dp))
-                    Text("Dati e servizi di terze parti:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.credits_third_party), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "• OpenStreetMap dati cartografici — © OpenStreetMap contributors (ODbL)\n" +
-                        "• Thunderforest tile server — mappe © Thunderforest, dati © OSM contributors\n" +
-                        "• Dati prezzi carburanti — Ministero delle Imprese e del Made in Italy (MIMIT) — " +
-                        "Dati pubblici italiani (CC BY 4.0, salvo diversa indicazione)",
+                        stringResource(R.string.credits_third_party_text),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        "Per i testi completi delle licenze visita:\n" +
-                        "https://www.apache.org/licenses/LICENSE-2.0\n" +
-                        "https://opendatacommons.org/licenses/odbl/",
+                        stringResource(R.string.credits_licenses_link),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary
                     )
                 }
             },
-            confirmButton = { TextButton(onClick = { showCreditsDialog = false }) { Text("Chiudi") } }
+            confirmButton = { TextButton(onClick = { showCreditsDialog = false }) { Text(stringResource(R.string.close)) } }
+        )
+    }
+
+    // === Dialog scelta tema ===
+    if (showThemeDialog) {
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            title = { Text(stringResource(R.string.theme_title)) },
+            text = {
+                Column {
+                    ThemeMode.entries.forEach { mode ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.setThemeMode(mode); showThemeDialog = false }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = themeMode == mode,
+                                onClick = { viewModel.setThemeMode(mode); showThemeDialog = false }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                when (mode) {
+                                    ThemeMode.SYSTEM -> stringResource(R.string.theme_system)
+                                    ThemeMode.LIGHT -> stringResource(R.string.theme_light)
+                                    ThemeMode.DARK -> stringResource(R.string.theme_dark)
+                                },
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showThemeDialog = false }) { Text(stringResource(R.string.close)) } }
         )
     }
 
@@ -204,18 +242,21 @@ fun MainScreen(viewModel: FuelViewModel) {
                 actions = {
                     when (val state = downloadState) {
                         is FuelRepository.DownloadState.Downloading -> {
-                            Text("Aggiornamento…", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.updating), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.width(4.dp))
                             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                         }
                         else -> {
                             IconButton(onClick = { viewModel.refreshData() }) {
-                                Icon(Icons.Default.Refresh, contentDescription = "Aggiorna dati")
+                                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh_data))
                             }
                         }
                     }
+                    IconButton(onClick = { showThemeDialog = true }) {
+                        Icon(Icons.Default.Palette, contentDescription = stringResource(R.string.theme_menu))
+                    }
                     IconButton(onClick = { showCreditsDialog = true }) {
-                        Icon(Icons.Default.Info, contentDescription = "Info app")
+                        Icon(Icons.Default.Info, contentDescription = stringResource(R.string.info_app))
                     }
                 }
             )
@@ -270,6 +311,17 @@ fun MainScreen(viewModel: FuelViewModel) {
                     onStationSelected = { id -> selectedStationId = id },
                     modifier = Modifier.fillMaxSize()
                 )
+                // Attribuzione obbligatoria per Thunderforest / OSM (Tile Usage Policy)
+                Text(
+                    stringResource(R.string.map_attribution),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Black.copy(alpha = 0.65f),
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(6.dp)
+                        .background(Color.White.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
                 if (userLat != 0.0 || userLon != 0.0) {
                     SmallFloatingActionButton(
                         onClick = { centerMapTrigger++ },
@@ -277,7 +329,7 @@ fun MainScreen(viewModel: FuelViewModel) {
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.primary
                     ) {
-                        Icon(Icons.Default.MyLocation, contentDescription = "Centra posizione")
+                        Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.center_location))
                     }
                 }
             }
@@ -288,14 +340,17 @@ fun MainScreen(viewModel: FuelViewModel) {
 // ==================== PERMISSION REQUEST SCREEN ====================
 
 @Composable
-private fun PermissionRequestScreen() {
+private fun PermissionRequestScreen(viewModel: FuelViewModel) {
     val ctx = LocalContext.current
     val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val fine = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
         val coarse = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
-        if (!fine && !coarse) {
+        if (fine || coarse) {
+            // Permesso concesso: recupera subito la posizione dell'utente
+            LocationHelper.getLastLocation(ctx, viewModel)
+        } else {
             // Permesso negato: apri impostazioni
             ctx.startActivity(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -325,15 +380,13 @@ private fun PermissionRequestScreen() {
             )
             Spacer(Modifier.height(24.dp))
             Text(
-                "Permesso posizione necessario",
+                stringResource(R.string.permission_location),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                "Fuel ha bisogno del permesso di posizione per mostrarti la tua " +
-                "posizione sulla mappa e cercare distributori nelle vicinanze.\n\n" +
-                "Senza questo permesso l'app non può funzionare.",
+                stringResource(R.string.permission_message),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -352,7 +405,7 @@ private fun PermissionRequestScreen() {
             ) {
                 Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(12.dp))
-                Text("Concedi permesso", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.grant_permission), style = MaterialTheme.typography.titleMedium)
             }
         }
     }
@@ -374,8 +427,8 @@ private fun SearchPanel(
         Column(modifier = Modifier.padding(12.dp)) {
             ExposedDropdownMenuBox(expanded = showFuelDropdown, onExpandedChange = { onFuelDropdownToggle() }) {
                 OutlinedTextField(
-                    value = selectedFuel.ifBlank { "Seleziona carburante" },
-                    onValueChange = {}, readOnly = true, label = { Text("Tipo carburante") },
+                    value = selectedFuel.ifBlank { stringResource(R.string.select_fuel) },
+                    onValueChange = {}, readOnly = true, label = { Text(stringResource(R.string.fuel_type)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showFuelDropdown) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(), singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium
@@ -388,23 +441,23 @@ private fun SearchPanel(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = searchMode == FuelViewModel.SearchMode.POSITION,
                     onClick = { onSearchModeChange(FuelViewModel.SearchMode.POSITION); onVicinoAMe() },
-                    label = { Text("Vicino a me") }, leadingIcon = { Icon(Icons.Default.MyLocation, null, Modifier.size(18.dp)) },
+                    label = { Text(stringResource(R.string.near_me)) }, leadingIcon = { Icon(Icons.Default.MyLocation, null, Modifier.size(18.dp)) },
                     modifier = Modifier.weight(1f))
                 FilterChip(selected = searchMode == FuelViewModel.SearchMode.ADDRESS,
                     onClick = { onSearchModeChange(FuelViewModel.SearchMode.ADDRESS) },
-                    label = { Text("Cerca indirizzo") }, leadingIcon = { Icon(Icons.Default.Search, null, Modifier.size(18.dp)) },
+                    label = { Text(stringResource(R.string.search_address_label)) }, leadingIcon = { Icon(Icons.Default.Search, null, Modifier.size(18.dp)) },
                     modifier = Modifier.weight(1f))
             }
             Spacer(Modifier.height(8.dp))
-            Text("Raggio: ${radiusKm.toInt()} km", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.radius_label, radiusKm.toInt()), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Slider(value = radiusKm.toFloat(), onValueChange = { onRadiusChange(it.toDouble()) }, valueRange = 1f..25f, steps = 23, modifier = Modifier.fillMaxWidth())
             AnimatedVisibility(visible = searchMode == FuelViewModel.SearchMode.ADDRESS) {
                 Column {
                     OutlinedTextField(value = addressQuery, onValueChange = { onAddressQueryChange(it) },
-                        label = { Text("Via, città…") }, modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(R.string.address_hint)) }, modifier = Modifier.fillMaxWidth(),
                         singleLine = true, leadingIcon = { Icon(Icons.Default.Place, null) }, textStyle = MaterialTheme.typography.bodyMedium)
                     if (selectedFuel.isBlank()) {
-                        Text("Seleziona prima un carburante sopra",
+                        Text(stringResource(R.string.select_fuel_first),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(start = 16.dp, top = 4.dp))
@@ -414,10 +467,10 @@ private fun SearchPanel(
             Spacer(Modifier.height(8.dp))
             Button(onClick = onSearch, modifier = Modifier.fillMaxWidth(), enabled = !isSearching) {
                 if (isSearching) { CircularProgressIndicator(Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp); Spacer(Modifier.width(8.dp)) }
-                Text(if (isSearching) "Ricerca in corso…" else "Cerca")
+                Text(if (isSearching) stringResource(R.string.searching) else stringResource(R.string.search))
             }
             if (selectedFuel.isBlank()) {
-                Text("Seleziona un tipo di carburante dal menu sopra per avviare la ricerca",
+                Text(stringResource(R.string.select_fuel_hint),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 4.dp, top = 2.dp))
@@ -428,13 +481,16 @@ private fun SearchPanel(
 
 // ==================== MAPPA ====================
 
-private fun createCircleDrawable(ctx: android.content.Context, color: Int, size: Int = 48): android.graphics.drawable.Drawable {
+private fun createCircleDrawable(ctx: android.content.Context, color: Int, sizeDp: Int = 18): android.graphics.drawable.Drawable {
+    // Converte la dimensione da dp a px in base alla densità dello schermo,
+    // così i marker restano proporzionati su dispositivi con densità diverse.
+    val size = (sizeDp * ctx.resources.displayMetrics.density).toInt().coerceAtLeast(8)
     val b = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888); val c = Canvas(b)
     val outer = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color; style = Paint.Style.FILL }
-    val border = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = android.graphics.Color.WHITE; style = Paint.Style.STROKE; strokeWidth = 4f }
+    val border = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = android.graphics.Color.WHITE; style = Paint.Style.STROKE; strokeWidth = size * 0.08f }
     val inner = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = android.graphics.Color.WHITE; style = Paint.Style.FILL }
-    c.drawCircle(size / 2f, size / 2f, size / 2f - 2f, outer)
-    c.drawCircle(size / 2f, size / 2f, size / 2f - 4f, border)
+    c.drawCircle(size / 2f, size / 2f, size / 2f - size * 0.04f, outer)
+    c.drawCircle(size / 2f, size / 2f, size / 2f - size * 0.08f, border)
     c.drawCircle(size / 2f, size / 2f, size / 5f, inner)
     return BitmapDrawable(ctx.resources, b)
 }
@@ -479,10 +535,13 @@ private fun OsmMapView(
                 val x = MapTileIndex.getX(pMapTileIndex)
                 val y = MapTileIndex.getY(pMapTileIndex)
                 // URL formato: https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=KEY
-                return "${getBaseUrl()}$zoom/$x/$y$mImageFilenameEnding?apikey=YOUR_THUNDERFOREST_API_KEY"
+                return "${getBaseUrl()}$zoom/$x/$y$mImageFilenameEnding?apikey=${BuildConfig.THUNDERFOREST_API_KEY}"
             }
         }
     }
+
+    // Titolo marker posizione utente (sollevato fuori dalla lambda non-composable di update)
+    val yourLocationLabel = stringResource(R.string.your_location)
 
     AndroidView(modifier = modifier, factory = { c ->
         MapView(c).apply {
@@ -499,7 +558,7 @@ private fun OsmMapView(
         map.overlays.add(Marker(map).apply {
             position = GeoPoint(userLat, userLon)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-            title = "La tua posizione"; icon = userDrw
+            title = yourLocationLabel; icon = userDrw
         })
         results.forEach { imp ->
             val isSelected = imp.idImpianto == selectedStationId
@@ -538,8 +597,8 @@ private fun ResultsPanel(
         Column {
             Row(modifier = Modifier.fillMaxWidth().clickable { onToggle() }.padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("${results.size} distributori trovati", style = MaterialTheme.typography.titleSmall)
-                Icon(if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp, "Toggle")
+                Text(stringResource(R.string.stations_found, results.size), style = MaterialTheme.typography.titleSmall)
+                Icon(if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp, stringResource(R.string.toggle_panel))
             }
             if (isExpanded) LazyColumn(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
                 items(results) { item ->
@@ -561,7 +620,7 @@ private fun ImpiantoCard(
 ) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
-        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
                 // Nome: cliccabile -> centra mappa
                 Text(impianto.nomeImpianto, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
@@ -579,13 +638,17 @@ private fun ImpiantoCard(
             }
             Spacer(Modifier.width(12.dp))
             Column(horizontalAlignment = Alignment.End) {
-                Text(String.format("%.3f", impianto.prezzo), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text("€/L", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(impianto.modalita, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
+                // Nome, prezzo e modalità (Self/Servito) sulla stessa riga (baseline)
+                Row {
+                    Text(String.format("%.3f", impianto.prezzo), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.alignByBaseline())
+                    Text("\u00A0€/L", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.alignByBaseline())
+                    Spacer(Modifier.width(6.dp))
+                    Text(impianto.modalita, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.alignByBaseline())
+                }
                 // Solo questo bottone apre Google Maps
                 SmallFloatingActionButton(onClick = onNavigate, modifier = Modifier.padding(top = 4.dp),
                     containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
-                    Icon(Icons.Default.Navigation, "Naviga", Modifier.size(18.dp))
+                    Icon(Icons.Default.Navigation, stringResource(R.string.navigate), Modifier.size(18.dp))
                 }
             }
         }

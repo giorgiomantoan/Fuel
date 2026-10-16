@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -20,6 +21,17 @@ class PreferencesManager(private val context: Context) {
 
     companion object {
         private val LAST_DOWNLOAD_KEY = longPreferencesKey("last_download_timestamp")
+        private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+    }
+
+    /** Modalità tema salvata (SYSTEM | LIGHT | DARK). Default: SYSTEM. */
+    val themeMode: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[THEME_MODE_KEY] ?: "SYSTEM"
+    }
+
+    /** Salva la modalità tema scelta dall'utente. */
+    suspend fun saveThemeMode(mode: String) {
+        context.dataStore.edit { prefs -> prefs[THEME_MODE_KEY] = mode }
     }
 
     /** Timestamp dell'ultimo download (epoch millis). 0 = mai scaricato. */

@@ -11,7 +11,8 @@ basata sui dati ufficiali **MIMIT** (Ministero delle Imprese e del Made in Italy
 - **Mappa OpenStreetMap** con marker colorati
 - **Risultati ordinati per prezzo** crescente
 - **Navigazione** verso il distributore via Google Maps
-- **Material Design 3** con Dynamic Colors
+- **Material Design 3 / Material You** con colori dinamici
+- **Tema selezionabile**: Sistema / Chiaro / Scuro (persistito)
 
 ## Stack Tecnologico
 
@@ -21,10 +22,76 @@ basata sui dati ufficiali **MIMIT** (Ministero delle Imprese e del Made in Italy
 | UI | **Jetpack Compose** + Material Design 3 |
 | Architettura | MVVM (ViewModel + StateFlow) |
 | Database | **Room** (SQLite) con KSP |
-| Mappe | **osmdroid** (OpenStreetMap) |
+| Mappe | **osmdroid** (OpenStreetMap, tile Thunderforest) |
 | Download | OkHttp |
 | Posizione | Google Play Services Location |
-| Preferenze | DataStore |
+| Preferenze | DataStore (tema e ultimo download) |
+
+## Requisiti
+
+- Android Studio (o una recente distribuzione di Android SDK)
+- JDK 17
+- Android SDK con API 35
+- Una chiave API **Thunderforest** gratuita (vedi sezione Configurazione)
+
+## Configurazione: chiave API Thunderforest
+
+La mappa usa i tile di [Thunderforest](https://www.thunderforest.com/) (basati su OpenStreetMap),
+che richiedono una chiave API personale. **La chiave non è inclusa nel repository** per motivi di sicurezza.
+
+Per ottenere una chiave gratuita:
+
+1. Registrati su https://thunderforest.com/maps/apis/
+2. Crea una chiave per il prodotto landscape
+
+Per configurarla, aggiungi la seguente riga al file **`local.properties`** (non versionato),
+nel percorso radice del progetto:
+
+```properties
+FUEL_THUNDERFOREST_API_KEY=la_tua_chiave
+```
+
+In alternativa, la chiave può essere fornita anche tramite:
+
+- una proprietà di progetto in `gradle.properties`
+  (`FUEL_THUNDERFOREST_API_KEY=...`)
+- una variabile d'ambiente `FUEL_THUNDERFOREST_API_KEY`
+
+La precedenza è: `gradle.properties` -> `local.properties` -> variabile d'ambiente.
+Senza la chiave l'app compila correttamente ma la **mappa resta vuota** (nessun tile scaricato).
+
+## Build e installazione
+
+Dal terminale, nella radice del progetto:
+
+```bash
+# Esegue l'APK di debug su un dispositivo/emulatore collegato
+./gradlew :app:installDebug
+
+# Oppure genera solo l'APK di debug
+./gradlew :app:assembleDebug
+# Output: app/build/outputs/apk/debug/app-debug.apk
+
+# Build release
+./gradlew :app:assembleRelease
+```
+
+Dopo ogni modifica al codice o alle risorse, ricompila con lo stesso comando.
+
+> Nota: la firma della build `release` è configurabile via `gradle.properties`
+> (`FUEL_KEYSTORE_PATH`, `FUEL_KEYSTORE_PASSWORD`, `FUEL_KEY_ALIAS`, `FUEL_KEY_PASSWORD`)
+> e viene applicata solo se il file keystore esiste. In assenza di keystore la build
+> release viene generata non firmata.
+
+## Struttura del progetto
+
+```
+app/src/main/java/com/example/fuel/
+├── data/            # Room (entity, DAO, database) e repository
+├── service/         # Download e parsing dei CSV MIMIT
+├── ui/              # Compose (screens, viewmodel, theme)
+└── util/            # Preferenze (DataStore) e posizione
+```
 
 ## Dati
 

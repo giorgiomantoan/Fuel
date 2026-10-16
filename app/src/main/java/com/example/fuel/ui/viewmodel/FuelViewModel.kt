@@ -8,10 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.fuel.FuelApplication
 import com.example.fuel.data.model.ImpiantoConPrezzo
 import com.example.fuel.data.repository.FuelRepository
+import com.example.fuel.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -65,6 +67,15 @@ class FuelViewModel(application: Application) : AndroidViewModel(application) {
     enum class SearchMode {
         POSITION,   // cerca vicino alla posizione corrente
         ADDRESS     // cerca per indirizzo/città
+    }
+
+    // === Modalità tema (Sistema / Chiaro / Scuro) ===
+    val themeMode: StateFlow<ThemeMode> = app.preferences.themeMode
+        .map { ThemeMode.fromName(it) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { app.preferences.saveThemeMode(mode.name) }
     }
 
     init {

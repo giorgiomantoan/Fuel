@@ -1,23 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fuel</string>
-    <string name="search_title">Cerca distributori</string>
+
+    <!-- Download iniziale -->
+    <string name="download_in_progress">Download dati carburanti in corso…</string>
+    <string name="first_run_hint">Prima esecuzione: scaricamento dati MIMIT</string>
+    <string name="takes_seconds">Richiede qualche secondo…</string>
+    <string name="updating">Aggiornamento…</string>
+
+    <!-- Barra superiore / icone -->
+    <string name="refresh_data">Aggiorna dati</string>
+    <string name="info_app">Info app</string>
+    <string name="center_location">Centra posizione</string>
+    <string name="search_label">Cerca</string>
+
+    <!-- Pannello di ricerca -->
+    <string name="select_fuel">Seleziona carburante</string>
     <string name="fuel_type">Tipo carburante</string>
-    <string name="radius">Raggio (km)</string>
-    <string name="search_position">Cerca vicino a me</string>
-    <string name="search_address">Cerca per indirizzo</string>
+    <string name="near_me">Vicino a me</string>
+    <string name="search_address_label">Cerca indirizzo</string>
+    <string name="radius_label">Raggio: %1$d km</string>
     <string name="address_hint">Via, città…</string>
+    <string name="select_fuel_first">Seleziona prima un carburante sopra</string>
+    <string name="searching">Ricerca in corso…</string>
     <string name="search">Cerca</string>
+    <string name="select_fuel_hint">Seleziona un tipo di carburante dal menu sopra per avviare la ricerca</string>
+
+    <!-- Mappa -->
+    <string name="map_attribution">Maps © Thunderforest · Data © OpenStreetMap contributors (ODbL)</string>
+    <string name="your_location">La tua posizione</string>
+
+    <!-- Risultati -->
+    <string name="stations_found">%1$d distributori trovati</string>
+    <string name="toggle_panel">Toggle</string>
+    <string name="navigate">Naviga</string>
+    <string name="self_service">Self</string>
+    <string name="servito">Servito</string>
+
+    <!-- Permesso posizione -->
+    <string name="permission_location">Permesso posizione necessario</string>
+    <string name="permission_message">Fuel ha bisogno del permesso di posizione per mostrarti la tua posizione sulla mappa e cercare distributori nelle vicinanze.\n\nSenza questo permesso l\'app non può funzionare.</string>
+    <string name="grant_permission">Concedi permesso</string>
+
+    <!-- Dialog crediti -->
+    <string name="theme_menu">Cambia tema</string>
+    <string name="theme_title">Tema</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Chiaro</string>
+    <string name="theme_dark">Scuro</string>
+    <string name="credits_title">Fuel v%1$s</string>
+    <string name="credits_developer">Sviluppato da ravem (github.com/ravem)\nLicenza MIT – Copyright © 2026 ravem\n\nThis software is provided \"as is\", without warranty of any kind.</string>
+    <string name="credits_components">Componenti e licenze:</string>
+    <string name="credits_third_party">Dati e servizi di terze parti:</string>
+    <string name="credits_third_party_text">• OpenStreetMap dati cartografici — © OpenStreetMap contributors (ODbL)\n• Thunderforest tile server — mappe © Thunderforest, dati © OSM contributors\n• Dati prezzi carburanti — Ministero delle Imprese e del Made in Italy (MIMIT) — Dati pubblici italiani (CC BY 4.0, salvo diversa indicazione)</string>
+    <string name="credits_licenses_link">Per i testi completi delle licenze visita:\nhttps://www.apache.org/licenses/LICENSE-2.0\nhttps://opendatacommons.org/licenses/odbl/</string>
+    <string name="close">Chiudi</string>
+
+    <!-- Generali (mantenute per compatibilità) -->
+    <string name="search_title">Cerca distributori</string>
     <string name="results">Risultati</string>
     <string name="no_results">Nessun distributore trovato</string>
     <string name="loading">Caricamento…</string>
     <string name="downloading_data">Scaricamento dati carburanti…</string>
     <string name="error_download">Errore scaricamento dati</string>
     <string name="error_location">Impossibile ottenere la posizione</string>
-    <string name="permission_location">Permesso posizione necessario</string>
     <string name="open_navigation">Apri navigazione</string>
-    <string name="self_service">Self</string>
-    <string name="servito">Servito</string>
     <string name="all_fuels">Tutti i carburanti</string>
     <string name="retry">Riprova</string>
     <string name="price">Prezzo</string>
