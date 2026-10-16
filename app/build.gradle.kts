@@ -26,6 +26,13 @@ android {
         versionCode = 2
         versionName = "1.2.0"
 
+        // ABI supportate: ARM reale dei telefoni moderni (es. Xiaomi Poco X4 5G,
+        // Snapdragon 695 -> arm64-v8a). Escludiamo x86/x86_64 (solo emulatori)
+        // per ridurre la dimensione dell'APK a parità di compatibilità.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+
         // Room schema export
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")

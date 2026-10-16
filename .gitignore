@@ -11,4 +11,6 @@ local.properties
 /app/build
 /app/release
 *.keystore
+*.jks
+/dist/
 /schemas
